@@ -1,0 +1,23 @@
+// Intensional Database
+vP(var, obj) :- Alloc(var, obj)
+
+vP(destVar, obj) :- Transfer(destVar, srcVar), vP(srcVar, obj)
+
+vP(dest, obj) :- Load(dest, field, baseVar), vP(baseVar, baseObj), hP(baseObj, field, obj)
+
+// t = new obj()
+// baseObj.field = t
+hP(baseObj, field, obj) :- Store(baseVar, field, srcVar),
+                            vP(baseVCar, baseObj),
+                            vP(srcVar, obj)
+
+
+
+// Notes on semi-naive evaluation for the above rules
+
+// Index data structures?
+// Extensional Database (input data)
+Alloc, Transfer, Load, Store
+
+first rule is not recursive --> ok
+second rule -> can be computed using delta vP
