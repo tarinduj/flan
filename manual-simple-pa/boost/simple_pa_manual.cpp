@@ -18,7 +18,7 @@ long fsize(int fd) {
     return stat.st_size;
 }
 
-void insert_to_2D(unordered_map<string, set<string> *> *index,
+void insert_to_2D(boost::unordered_map<string, set<string> *> *index,
                   string v1, string v2) {
     auto kv = index->find(v1);
     set<string> *entry2 = nullptr;
@@ -35,13 +35,13 @@ void insert_to_2D(unordered_map<string, set<string> *> *index,
 }
 
 void insert_to_3D(
-    unordered_map<string, unordered_map<string, set<string> *> *>
+    boost::unordered_map<string, boost::unordered_map<string, set<string> *> *>
         *index,
     string v1, string v2, string v3) {
     auto kv = index->find(v1);
-    unordered_map<string, set<string> *> *entry2 = nullptr;
+    boost::unordered_map<string, set<string> *> *entry2 = nullptr;
     if (kv == index->end()) {
-        auto newEntry2 = new unordered_map<string, set<string> *>();
+        auto newEntry2 = new boost::unordered_map<string, set<string> *>();
         (*index)[v1] = newEntry2;
         entry2 = newEntry2;
     } else {
@@ -52,7 +52,7 @@ void insert_to_3D(
 }
 
 void parse_two_column(int fd,
-                      unordered_map<string, set<string> *> *index) {
+                      boost::unordered_map<string, set<string> *> *index) {
     int size = fsize(fd);
     char *data = (char *)mmap(0, size, PROT_READ, MAP_SHARED, fd, 0);
     int i = 0;
@@ -76,7 +76,7 @@ void parse_two_column(int fd,
 
 void parse_three_column(
     int fd,
-    unordered_map<string, unordered_map<string, set<string> *> *>
+    boost::unordered_map<string, boost::unordered_map<string, set<string> *> *>
         *index,
     int order = 0) {
     int size = fsize(fd);
@@ -119,7 +119,7 @@ void parse_three_column(
     }
 }
 
-void print_2D(unordered_map<string, set<string> *> *data) {
+void print_2D(boost::unordered_map<string, set<string> *> *data) {
     for (auto kv : *data) {
         auto key = kv.first;
         for (auto value : *kv.second) {
@@ -129,7 +129,7 @@ void print_2D(unordered_map<string, set<string> *> *data) {
 }
 
 void print_3D(
-    unordered_map<string, unordered_map<string, set<string> *> *>
+    boost::unordered_map<string, boost::unordered_map<string, set<string> *> *>
         *data) {
     for (auto kkv : *data) {
         auto k1 = kkv.first;
@@ -142,7 +142,7 @@ void print_3D(
     }
 }
 
-bool is_new_2D(unordered_map<string, set<string> *> *data, string k,
+bool is_new_2D(boost::unordered_map<string, set<string> *> *data, string k,
                string v) {
     if (data->find(k) != data->end()) {
         if ((*data)[k]->find(v) != (*data)[k]->end()) {
@@ -153,7 +153,7 @@ bool is_new_2D(unordered_map<string, set<string> *> *data, string k,
 }
 
 bool is_new_3D(
-    unordered_map<string, unordered_map<string, set<string> *> *>
+    boost::unordered_map<string, boost::unordered_map<string, set<string> *> *>
         *data,
     string k1, string k2, string v) {
     if (data->find(k1) != data->end()) {
@@ -167,8 +167,8 @@ bool is_new_3D(
 }
 
 // TODO: Can we do better?
-void update_2D(unordered_map<string, set<string> *> *data,
-               unordered_map<string, set<string> *> *new_data) {
+void update_2D(boost::unordered_map<string, set<string> *> *data,
+               boost::unordered_map<string, set<string> *> *new_data) {
     for (auto kv : *new_data) {
         auto k = kv.first;
         if (data->find(k) == data->end()) {
@@ -180,7 +180,7 @@ void update_2D(unordered_map<string, set<string> *> *data,
     }
 }
 
-void free_2D(unordered_map<string, set<string> *> *data) {
+void free_2D(boost::unordered_map<string, set<string> *> *data) {
     // deep free
     for (auto &kv : *data) {
         kv.second->clear();
@@ -188,7 +188,7 @@ void free_2D(unordered_map<string, set<string> *> *data) {
     data->clear();
 }
 
-int size_2D(unordered_map<string, set<string> *> *data) {
+int size_2D(boost::unordered_map<string, set<string> *> *data) {
     int count = 0;
     for (auto &kv: *data) {
         count += kv.second->size();
@@ -196,7 +196,7 @@ int size_2D(unordered_map<string, set<string> *> *data) {
     return count;
 }
 
-void save_to_file_2D(unordered_map<string, set<string> *> *data,
+void save_to_file_2D(boost::unordered_map<string, set<string> *> *data,
                      string fname) {
     ofstream file;
     file.open(fname);
@@ -219,51 +219,51 @@ void save_to_file_2D(unordered_map<string, set<string> *> *data,
 
 int main() {
     // indexes to store data
-    auto alloc = new unordered_map<string, set<string> *>();
-    auto assign = new unordered_map<
+    auto alloc = new boost::unordered_map<string, set<string> *>();
+    auto assign = new boost::unordered_map<
         string, set<string> *>();  // we directly load PrimitiveLoad
                                              // into Assign
     auto load =
-        new unordered_map<string,
-                          unordered_map<string, set<string> *> *>();
+        new boost::unordered_map<string,
+                          boost::unordered_map<string, set<string> *> *>();
     // Store is indexed in this order: base -> field -> source (this order
     // because base is the join key)
     auto store =
-        new unordered_map<string,
-                          unordered_map<string, set<string> *> *>();
+        new boost::unordered_map<string,
+                          boost::unordered_map<string, set<string> *> *>();
 
     // varPointsTo(var:Variable, heap:Allocation)
-    auto vp = new unordered_map<string, set<string> *>();
-    auto vp_delta = new unordered_map<string, set<string> *>();
-    auto vp_new = new unordered_map<string, set<string> *>();
+    auto vp = new boost::unordered_map<string, set<string> *>();
+    auto vp_delta = new boost::unordered_map<string, set<string> *>();
+    auto vp_new = new boost::unordered_map<string, set<string> *>();
 
     // varPointsTo indexed by heap (required for recursice rule1)
-    auto vp2 = new unordered_map<string, set<string> *>();
-    auto vp2_delta = new unordered_map<string, set<string> *>();
-    auto vp2_new = new unordered_map<string, set<string> *>();
+    auto vp2 = new boost::unordered_map<string, set<string> *>();
+    auto vp2_delta = new boost::unordered_map<string, set<string> *>();
+    auto vp2_new = new boost::unordered_map<string, set<string> *>();
 
     // alias(x:Variable,y:Variable)
-    auto alias = new unordered_map<string, set<string> *>();
-    auto alias_delta = new unordered_map<string, set<string> *>();
-    auto alias_new = new unordered_map<string, set<string> *>();
+    auto alias = new boost::unordered_map<string, set<string> *>();
+    auto alias_delta = new boost::unordered_map<string, set<string> *>();
+    auto alias_new = new boost::unordered_map<string, set<string> *>();
 
     // Assign(source:Variable, destination:Variable)
     auto assign_delta =
-        new unordered_map<string, set<string> *>;
-    auto assign_new = new unordered_map<string, set<string> *>();
+        new boost::unordered_map<string, set<string> *>;
+    auto assign_new = new boost::unordered_map<string, set<string> *>();
 
     // parse the data and load into Extentional relations
     // alloc
-    int alloc_fd = open("../souffle-simple-pa/facts/AssignAlloc.facts", 0);
+    int alloc_fd = open("../../../souffle-simple-pa/facts/AssignAlloc.facts", 0);
     parse_two_column(alloc_fd, alloc);
 
-    int assign_fd = open("../souffle-simple-pa/facts/PrimitiveAssign.facts", 0);
+    int assign_fd = open("../../../souffle-simple-pa/facts/PrimitiveAssign.facts", 0);
     parse_two_column(assign_fd, assign);
 
-    int load_fd = open("../souffle-simple-pa/facts/Load.facts", 0);
+    int load_fd = open("../../../souffle-simple-pa/facts/Load.facts", 0);
     parse_three_column(load_fd, load, 2);
 
-    int store_fd = open("../souffle-simple-pa/facts/Store.facts", 0);
+    int store_fd = open("../../../souffle-simple-pa/facts/Store.facts", 0);
     parse_three_column(store_fd, store, 1);
 
     // assign_delta = assign in the first iter
@@ -494,10 +494,10 @@ int main() {
         assign_delta = assign_new;
 
         // new <- []
-        vp_new = new unordered_map<string, set<string> *>();
-        vp2_new = new unordered_map<string, set<string> *>();
-        alias_new = new unordered_map<string, set<string> *>();
-        assign_new = new unordered_map<string, set<string> *>();
+        vp_new = new boost::unordered_map<string, set<string> *>();
+        vp2_new = new boost::unordered_map<string, set<string> *>();
+        alias_new = new boost::unordered_map<string, set<string> *>();
+        assign_new = new boost::unordered_map<string, set<string> *>();
         cout << "Iteration Done\n";
     }
     // write the output to files

@@ -5,6 +5,9 @@
 **/*.data
 **/*.csv
 manual-simple-pa/abseil/build/*
+!manual-simple-pa/abseil/build/time_script.sh
+manual-simple-pa/boost/build/*
+!manual-simple-pa/boost/build/time_script.sh
 
 # generated outputs
 output.txt
