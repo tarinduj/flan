@@ -1,41 +1,25 @@
-// From - https://github.com/souffle-lang/benchmarks/blob/master/benchmarks/pointsto/pointsto.dl
 // simple call-insensitive field-sensitive points-to analysis in Datalog
-
 .type Variable 
 .type Allocation
 .type Field
 
-// alloc
 .decl AssignAlloc(var:Variable, heap:Allocation) input
-
-// assign
 .decl Assign(source:Variable, destination:Variable) output
-
-// .decl PrimitiveAssign(source:Variable, dest:Variable) input
-
+.decl PrimitiveAssign(source:Variable, dest:Variable) input
 .decl Load(base:Variable, dest:Variable, field:Field) input
 .decl Store(source:Variable, base:Variable, field:Field) input
-
-// vp
 .decl VarPointsTo(var:Variable, heap:Allocation) output
-
-// alias
 .decl Alias(x:Variable,y:Variable) output
 
-// Assign(var1, var2) :- 
-   // PrimitiveAssign(var1,var2). 
+Assign(var1, var2) :- 
+  PrimitiveAssign(var1,var2). 
 
-// base rule
-VarPointsTo(var, heap) :-
-  AssignAlloc(var, heap). 
-
-
-// recursive rules
 Alias(instanceVar, iVar) :- 
   VarPointsTo(instanceVar, instanceHeap), 
   VarPointsTo(iVar, instanceHeap).
 
-
+VarPointsTo(var, heap) :-
+  AssignAlloc(var, heap). 
 
 VarPointsTo(var1, heap) :-
   Assign(var2, var1), 

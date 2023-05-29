@@ -1,0 +1,105 @@
+PROGRAM
+ DECLARATION
+  @delta_Alias(x:s:Variable,y:s:Variable) 
+  @delta_Assign(source:s:Variable,destination:s:Variable) 
+  @delta_VarPointsTo(var:s:Variable,heap:s:Allocation) 
+  @new_Alias(x:s:Variable,y:s:Variable) 
+  @new_Assign(source:s:Variable,destination:s:Variable) 
+  @new_VarPointsTo(var:s:Variable,heap:s:Allocation) 
+  Alias(x:s:Variable,y:s:Variable) 
+  Assign(source:s:Variable,destination:s:Variable) 
+  AssignAlloc(var:s:Variable,heap:s:Allocation) 
+  Load(base:s:Variable,dest:s:Variable,field:s:Field) 
+  PrimitiveAssign(source:s:Variable,dest:s:Variable) 
+  Store(source:s:Variable,base:s:Variable,field:s:Field) 
+  VarPointsTo(var:s:Variable,heap:s:Allocation) 
+ END DECLARATION
+ BEGIN MAIN
+  LOAD DATA FOR AssignAlloc FROM "facts/AssignAlloc.facts"
+  LOAD DATA FOR Load FROM "facts/Load.facts"
+  LOAD DATA FOR PrimitiveAssign FROM "facts/PrimitiveAssign.facts"
+  LOAD DATA FOR Store FROM "facts/Store.facts"
+   QUERY
+    IF (NOT (PrimitiveAssign = ∅))
+     FOR t0 IN PrimitiveAssign
+      PROJECT (t0.0, t0.1) INTO Assign
+  QUERY
+   FOR t0 IN Assign
+    PROJECT (t0.0, t0.1) INTO @delta_Assign
+   QUERY
+    IF (NOT (AssignAlloc = ∅))
+     FOR t0 IN AssignAlloc
+      PROJECT (t0.0, t0.1) INTO VarPointsTo
+  QUERY
+   FOR t0 IN VarPointsTo
+    PROJECT (t0.0, t0.1) INTO @delta_VarPointsTo
+  QUERY
+   FOR t0 IN Alias
+    PROJECT (t0.0, t0.1) INTO @delta_Alias
+  LOOP
+     QUERY
+      IF (((NOT (Store = ∅)) AND (NOT (@delta_Alias = ∅))) AND (NOT (Load = ∅)))
+       FOR t0 IN Store
+        FOR t1 IN @delta_Alias ON INDEX t1.0 = t0.1
+         FOR t2 IN Load ON INDEX t2.0 = t1.1 AND t2.2 = t0.2
+          IF (NOT (t0.0,t2.1) ∈ Assign)
+           PROJECT (t0.0, t2.1) INTO @new_Assign
+     QUERY
+      IF ((NOT (@delta_Assign = ∅)) AND (NOT (VarPointsTo = ∅)))
+       FOR t0 IN @delta_Assign
+        FOR t1 IN VarPointsTo ON INDEX t1.0 = t0.0
+         IF ((NOT (t0.0,t1.1) ∈ @delta_VarPointsTo) AND (NOT (t0.1,t1.1) ∈ VarPointsTo))
+          PROJECT (t0.1, t1.1) INTO @new_VarPointsTo
+     QUERY
+      IF ((NOT (Assign = ∅)) AND (NOT (@delta_VarPointsTo = ∅)))
+       FOR t0 IN Assign
+        FOR t1 IN @delta_VarPointsTo ON INDEX t1.0 = t0.0
+         IF (NOT (t0.1,t1.1) ∈ VarPointsTo)
+          PROJECT (t0.1, t1.1) INTO @new_VarPointsTo
+     QUERY
+      IF ((NOT (@delta_VarPointsTo = ∅)) AND (NOT (VarPointsTo = ∅)))
+       FOR t0 IN @delta_VarPointsTo
+        FOR t1 IN VarPointsTo ON INDEX t1.1 = t0.1
+         IF ((NOT (t1.0,t0.1) ∈ @delta_VarPointsTo) AND (NOT (t0.0,t1.0) ∈ Alias))
+          PROJECT (t0.0, t1.0) INTO @new_Alias
+     QUERY
+      IF ((NOT (VarPointsTo = ∅)) AND (NOT (@delta_VarPointsTo = ∅)))
+       FOR t0 IN VarPointsTo
+        FOR t1 IN @delta_VarPointsTo ON INDEX t1.1 = t0.1
+         IF (NOT (t0.0,t1.0) ∈ Alias)
+          PROJECT (t0.0, t1.0) INTO @new_Alias
+   EXIT (((@new_Assign = ∅) AND (@new_VarPointsTo = ∅)) AND (@new_Alias = ∅))
+   QUERY
+    FOR t0 IN @new_Assign
+     PROJECT (t0.0, t0.1) INTO Assign
+   SWAP (@delta_Assign, @new_Assign)
+   CLEAR @new_Assign
+   QUERY
+    FOR t0 IN @new_VarPointsTo
+     PROJECT (t0.0, t0.1) INTO VarPointsTo
+   SWAP (@delta_VarPointsTo, @new_VarPointsTo)
+   CLEAR @new_VarPointsTo
+   QUERY
+    FOR t0 IN @new_Alias
+     PROJECT (t0.0, t0.1) INTO Alias
+   SWAP (@delta_Alias, @new_Alias)
+   CLEAR @new_Alias
+  END LOOP
+  CLEAR @delta_Assign
+  CLEAR @new_Assign
+  CLEAR @delta_VarPointsTo
+  CLEAR @new_VarPointsTo
+  CLEAR @delta_Alias
+  CLEAR @new_Alias
+  STORE DATA FOR Assign TO "Assign.out"
+  STORE DATA FOR VarPointsTo TO "VarPointsTo.out"
+  STORE DATA FOR Alias TO "Alias.out"
+  CLEAR AssignAlloc
+  CLEAR Assign
+  CLEAR PrimitiveAssign
+  CLEAR Load
+  CLEAR Store
+  CLEAR VarPointsTo
+  CLEAR Alias
+ END MAIN
+END PROGRAM

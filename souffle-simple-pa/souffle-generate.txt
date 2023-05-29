@@ -1,0 +1,4 @@
+souffle -Fsimple-pa/ -D=simple-pa/ -g simple-pa/output.cpp simple-pa/simple-pa.dl
+
+Running:
+g++ -std=c++17 -I/usr/include/souffle/ output.cpp

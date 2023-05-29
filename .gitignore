@@ -1,0 +1,47 @@
+.vscode
+**/*.out.*
+**/*.out
+**/*.log
+**/*.data
+**/*.csv
+manual-simple-pa/abseil/build/*
+
+# generated outputs
+output.txt
+
+# profiling related
+*/*.perf
+*/*.output
+*/perf.data.old
+
+# scala
+*.class
+*.log
+.DS_Store
+
+# sbt specific
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+
+.idea/*
+.vscode/*
+**/metals.sbt
+**/*.metals/*
+**/*.bsp/*
+**/.bloop/*
+
+# generated code
+cqueries/*
+
+# data
+doop_input.zip
+doop_input/
+
+output/
