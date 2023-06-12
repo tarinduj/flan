@@ -5,6 +5,8 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <chrono>
+
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
@@ -206,31 +208,36 @@ void save_to_file_2D(HashMap *data, string fname) {
 }
 
 int main() {
+    // start timer
+    auto start = std::chrono::high_resolution_clock::now();
+
+    auto factor = 1;
+
     // indexes to store data
-    auto alloc = new HashMap();
-    auto assign = new HashMap();
-    auto load = new HashMap3D();
-    auto store = new HashMap3D();
+    auto alloc = new HashMap(); alloc->reserve(512*factor);
+    
+    auto load = new HashMap3D(); load->reserve(512*factor);
+    auto store = new HashMap3D(); store->reserve(512*factor);
 
     // varPointsTo(var:Variable, heap:Allocation)
-    auto vp = new HashMap();
-    auto vp_delta = new HashMap();
-    auto vp_new = new HashMap();
+    auto vp = new HashMap(); vp->reserve(512*factor);
+    auto vp_delta = new HashMap(); vp_delta->reserve(512*factor);
+    auto vp_new = new HashMap(); vp_new->reserve(512*factor);
 
     // varPointsTo indexed by heap (required for recursice rule1)
-    auto vp2 = new HashMap();
-    auto vp2_delta = new HashMap();
-    auto vp2_new = new HashMap();
+    auto vp2 = new HashMap(); vp2->reserve(512*factor);
+    auto vp2_delta = new HashMap(); vp2_delta->reserve(512*factor);
+    auto vp2_new = new HashMap(); vp2_new->reserve(512*factor);
 
     // alias(x:Variable,y:Variable)
-    auto alias = new HashMap();
-    auto alias_delta = new HashMap();
-    auto alias_new = new HashMap();
+    auto alias = new HashMap(); alias->reserve(512*factor);
+    auto alias_delta = new HashMap(); alias_delta->reserve(512*factor);
+    auto alias_new = new HashMap(); alias_new->reserve(512*factor);
 
     // Assign(source:Variable, destination:Variable)
-    auto assign_delta =
-        new HashMap;
-    auto assign_new = new HashMap();
+    auto assign = new HashMap(); assign->reserve(512*factor);
+    auto assign_delta = new HashMap; assign_delta->reserve(512*factor); 
+    auto assign_new = new HashMap(); assign_new->reserve(512*factor);
 
     // parse the data and load into Extentional relations
     // alloc
@@ -269,15 +276,15 @@ int main() {
     int iter = 0;
     while (vp_delta->size() != 0 || alias_delta->size() != 0 ||
            assign_delta->size() != 0) {
-        cout << "-------------iter " << iter << "-------------\n";
-        cout << "vp_delta size = " << size_2D(vp_delta) << endl;
-        cout << "alias_delta size = " << size_2D(alias_delta) << endl;
-        cout << "assign_delta size = " << size_2D(assign_delta) << endl;
-        cout << "-------------------------------\n";
-        cout << "vp size = " << size_2D(vp) << endl;
-        cout << "alias size = " << size_2D(alias) << endl;
-        cout << "assign size = " << size_2D(assign) << endl;
-        cout << "-------------------------------\n";
+        // cout << "-------------iter " << iter << "-------------\n";
+        // cout << "vp_delta size = " << size_2D(vp_delta) << endl;
+        // cout << "alias_delta size = " << size_2D(alias_delta) << endl;
+        // cout << "assign_delta size = " << size_2D(assign_delta) << endl;
+        // cout << "-------------------------------\n";
+        // cout << "vp size = " << size_2D(vp) << endl;
+        // cout << "alias size = " << size_2D(alias) << endl;
+        // cout << "assign size = " << size_2D(assign) << endl;
+        // cout << "-------------------------------\n";
         iter++;
         /*
         Assign(var1, var2) :-
@@ -478,10 +485,25 @@ int main() {
         vp2_new = new HashMap();
         alias_new = new HashMap();
         assign_new = new HashMap();
-        cout << "Iteration Done\n";
+        // cout << "Iteration Done\n";
     }
+
+    // PRINT NUMBER OF ELEMENTS IN ALL HASHMAPS
+    std::cout << "Number of elements in vp: " << vp->size() << std::endl;
+    std::cout << "Number of elements in vp2: " << vp2->size() << std::endl;
+    std::cout << "Number of elements in alias: " << alias->size() << std::endl;
+    std::cout << "Number of elements in assign: " << assign->size()
+              << std::endl;
+
+
     // write the output to files
     save_to_file_2D(vp, "VarPointsTo.csv");
     save_to_file_2D(alias, "Alias.csv");
     save_to_file_2D(assign, "Assign.csv");
+
+    // end timer
+    auto end = chrono::steady_clock::now();
+    cout << "Time elapsed: "
+         << chrono::duration_cast<chrono::microseconds>(end - start).count()
+         << " microseconds" << endl;
 }

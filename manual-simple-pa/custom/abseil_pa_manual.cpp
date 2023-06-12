@@ -5,12 +5,12 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-// #include <unordered_map>
-#include <boost/unordered_map.hpp>
-
-#include <set>
+#include <chrono>
 
 using namespace std;
+
+using HashMap2D = unordered_map<string, set<string> *>;
+using HashMap3D = unordered_map<string, HashMap2D *>;
 
 long fsize(int fd) {
     struct stat stat;
@@ -18,13 +18,12 @@ long fsize(int fd) {
     return stat.st_size;
 }
 
-void insert_to_2D(boost::unordered_map<string, set<string> *> *index,
-                  string v1, string v2) {
+void insert_to_2D(HashMap2D *index, string v1, string v2) {
     auto kv = index->find(v1);
-    set<string> *entry2 = nullptr;
+    absl::flat_hash_set<string> *entry2 = nullptr;
     if (kv == index->end()) {
         // new key
-        auto newEntry2 = new set<string>();
+        auto newEntry2 = new absl::flat_hash_set<string>();
         (*index)[v1] = newEntry2;
         entry2 = newEntry2;
     } else {
@@ -34,14 +33,11 @@ void insert_to_2D(boost::unordered_map<string, set<string> *> *index,
     entry2->insert(v2);
 }
 
-void insert_to_3D(
-    boost::unordered_map<string, boost::unordered_map<string, set<string> *> *>
-        *index,
-    string v1, string v2, string v3) {
+void insert_to_3D(HashMap3D *index, string v1, string v2, string v3) {
     auto kv = index->find(v1);
-    boost::unordered_map<string, set<string> *> *entry2 = nullptr;
+    HashMap2D *entry2 = nullptr;
     if (kv == index->end()) {
-        auto newEntry2 = new boost::unordered_map<string, set<string> *>();
+        auto newEntry2 = new HashMap2D();
         (*index)[v1] = newEntry2;
         entry2 = newEntry2;
     } else {
@@ -51,8 +47,7 @@ void insert_to_3D(
     insert_to_2D(entry2, v2, v3);
 }
 
-void parse_two_column(int fd,
-                      boost::unordered_map<string, set<string> *> *index) {
+void parse_two_column(int fd, HashMap2D *index) {
     int size = fsize(fd);
     char *data = (char *)mmap(0, size, PROT_READ, MAP_SHARED, fd, 0);
     int i = 0;
@@ -74,11 +69,7 @@ void parse_two_column(int fd,
     }
 }
 
-void parse_three_column(
-    int fd,
-    boost::unordered_map<string, boost::unordered_map<string, set<string> *> *>
-        *index,
-    int order = 0) {
+void parse_three_column(int fd, HashMap3D *index, int order = 0) {
     int size = fsize(fd);
     char *data = (char *)mmap(0, size, PROT_READ, MAP_SHARED, fd, 0);
     int i = 0;
@@ -119,7 +110,7 @@ void parse_three_column(
     }
 }
 
-void print_2D(boost::unordered_map<string, set<string> *> *data) {
+void print_2D(HashMap2D *data) {
     for (auto kv : *data) {
         auto key = kv.first;
         for (auto value : *kv.second) {
@@ -128,9 +119,7 @@ void print_2D(boost::unordered_map<string, set<string> *> *data) {
     }
 }
 
-void print_3D(
-    boost::unordered_map<string, boost::unordered_map<string, set<string> *> *>
-        *data) {
+void print_3D(HashMap3D *data) {
     for (auto kkv : *data) {
         auto k1 = kkv.first;
         for (auto kv : *kkv.second) {
@@ -142,8 +131,7 @@ void print_3D(
     }
 }
 
-bool is_new_2D(boost::unordered_map<string, set<string> *> *data, string k,
-               string v) {
+bool is_new_2D(HashMap2D *data, string k, string v) {
     if (data->find(k) != data->end()) {
         if ((*data)[k]->find(v) != (*data)[k]->end()) {
             return false;
@@ -152,10 +140,7 @@ bool is_new_2D(boost::unordered_map<string, set<string> *> *data, string k,
     return true;
 }
 
-bool is_new_3D(
-    boost::unordered_map<string, boost::unordered_map<string, set<string> *> *>
-        *data,
-    string k1, string k2, string v) {
+bool is_new_3D(HashMap3D *data, string k1, string k2, string v) {
     if (data->find(k1) != data->end()) {
         if ((*data)[k1]->find(v) != (*data)[k1]->end()) {
             if ((*(*data)[k1])[k2]->find(v) != (*(*data)[k1])[k2]->end()) {
@@ -167,12 +152,11 @@ bool is_new_3D(
 }
 
 // TODO: Can we do better?
-void update_2D(boost::unordered_map<string, set<string> *> *data,
-               boost::unordered_map<string, set<string> *> *new_data) {
+void update_2D(HashMap2D *data, HashMap2D *new_data) {
     for (auto kv : *new_data) {
         auto k = kv.first;
         if (data->find(k) == data->end()) {
-            (*data)[k] = new set<string>();
+            (*data)[k] = new absl::flat_hash_set<string>();
         }
         for (auto v : *kv.second) {
             (*data)[k]->insert(v);
@@ -180,7 +164,7 @@ void update_2D(boost::unordered_map<string, set<string> *> *data,
     }
 }
 
-void free_2D(boost::unordered_map<string, set<string> *> *data) {
+void free_2D(HashMap2D *data) {
     // deep free
     for (auto &kv : *data) {
         kv.second->clear();
@@ -188,7 +172,7 @@ void free_2D(boost::unordered_map<string, set<string> *> *data) {
     data->clear();
 }
 
-int size_2D(boost::unordered_map<string, set<string> *> *data) {
+int size_2D(HashMap2D *data) {
     int count = 0;
     for (auto &kv: *data) {
         count += kv.second->size();
@@ -196,8 +180,8 @@ int size_2D(boost::unordered_map<string, set<string> *> *data) {
     return count;
 }
 
-void save_to_file_2D(boost::unordered_map<string, set<string> *> *data,
-                     string fname) {
+void save_to_file_2D(HashMap2D *data, string fname) {
+
     ofstream file;
     file.open(fname);
 
@@ -218,42 +202,36 @@ void save_to_file_2D(boost::unordered_map<string, set<string> *> *data,
 }
 
 int main() {
-     // start timer
+    // start timer
     auto start = std::chrono::high_resolution_clock::now();
 
+    auto factor = 1;
+
     // indexes to store data
-    auto alloc = new boost::unordered_map<string, set<string> *>();
-    auto assign = new boost::unordered_map<
-        string, set<string> *>();  // we directly load PrimitiveLoad
-                                             // into Assign
-    auto load =
-        new boost::unordered_map<string,
-                          boost::unordered_map<string, set<string> *> *>();
-    // Store is indexed in this order: base -> field -> source (this order
-    // because base is the join key)
-    auto store =
-        new boost::unordered_map<string,
-                          boost::unordered_map<string, set<string> *> *>();
+    auto alloc = new HashMap2D(); alloc->reserve(512*factor);
+    
+    auto load = new HashMap3D(); load->reserve(512*factor);
+    auto store = new HashMap3D(); store->reserve(512*factor);
 
     // varPointsTo(var:Variable, heap:Allocation)
-    auto vp = new boost::unordered_map<string, set<string> *>();
-    auto vp_delta = new boost::unordered_map<string, set<string> *>();
-    auto vp_new = new boost::unordered_map<string, set<string> *>();
+    auto vp = new HashMap2D(); vp->reserve(512*factor);
+    auto vp_delta = new HashMap2D(); vp_delta->reserve(512*factor);
+    auto vp_new = new HashMap2D(); vp_new->reserve(512*factor);
 
     // varPointsTo indexed by heap (required for recursice rule1)
-    auto vp2 = new boost::unordered_map<string, set<string> *>();
-    auto vp2_delta = new boost::unordered_map<string, set<string> *>();
-    auto vp2_new = new boost::unordered_map<string, set<string> *>();
+    auto vp2 = new HashMap2D(); vp2->reserve(512*factor);
+    auto vp2_delta = new HashMap2D(); vp2_delta->reserve(512*factor);
+    auto vp2_new = new HashMap2D(); vp2_new->reserve(512*factor);
 
     // alias(x:Variable,y:Variable)
-    auto alias = new boost::unordered_map<string, set<string> *>();
-    auto alias_delta = new boost::unordered_map<string, set<string> *>();
-    auto alias_new = new boost::unordered_map<string, set<string> *>();
+    auto alias = new HashMap2D(); alias->reserve(512*factor);
+    auto alias_delta = new HashMap2D(); alias_delta->reserve(512*factor);
+    auto alias_new = new HashMap2D(); alias_new->reserve(512*factor);
 
     // Assign(source:Variable, destination:Variable)
-    auto assign_delta =
-        new boost::unordered_map<string, set<string> *>;
-    auto assign_new = new boost::unordered_map<string, set<string> *>();
+    auto assign = new HashMap2D(); assign->reserve(512*factor);
+    auto assign_delta = new HashMap; assign_delta->reserve(512*factor); 
+    auto assign_new = new HashMap2D(); assign_new->reserve(512*factor);
 
     // parse the data and load into Extentional relations
     // alloc
@@ -497,18 +475,27 @@ int main() {
         assign_delta = assign_new;
 
         // new <- []
-        vp_new = new boost::unordered_map<string, set<string> *>();
-        vp2_new = new boost::unordered_map<string, set<string> *>();
-        alias_new = new boost::unordered_map<string, set<string> *>();
-        assign_new = new boost::unordered_map<string, set<string> *>();
+        vp_new = new HashMap2D();
+        vp2_new = new HashMap2D();
+        alias_new = new HashMap2D();
+        assign_new = new HashMap2D();
         // cout << "Iteration Done\n";
     }
+
+    // PRINT NUMBER OF ELEMENTS IN ALL HASHMAPS
+    std::cout << "Number of elements in vp: " << vp->size() << std::endl;
+    std::cout << "Number of elements in vp2: " << vp2->size() << std::endl;
+    std::cout << "Number of elements in alias: " << alias->size() << std::endl;
+    std::cout << "Number of elements in assign: " << assign->size()
+              << std::endl;
+
+
     // write the output to files
     save_to_file_2D(vp, "VarPointsTo.csv");
     save_to_file_2D(alias, "Alias.csv");
     save_to_file_2D(assign, "Assign.csv");
 
-     // end timer
+    // end timer
     auto end = chrono::steady_clock::now();
     cout << "Time elapsed: "
          << chrono::duration_cast<chrono::microseconds>(end - start).count()
